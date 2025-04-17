@@ -1,88 +1,15 @@
+import type { WatchlistItem } from '@/types/stocks'
 import axios, { AxiosError } from 'axios'
 
-const BASE_URL = import.meta.env.AWS_URL as string
+const BASE_URL = import.meta.env.VITE_AWS_URL as string
 const WATCHLIST_ENDPOINT = `${BASE_URL}/watchlist`
-
-interface WatchlistItem {
-  id: number
-  user_id: number
-  symbol: string
-  company_name: string
-  notes: string
-  created_at: string
-}
+console.log('BASE_URL:', BASE_URL)
+console.log('WATCHLIST_ENDPOINT:', WATCHLIST_ENDPOINT)
 
 type WatchlistAddItem = Omit<WatchlistItem, 'id'>
 
 interface SuccessResponse {
   message: string
-}
-
-export const apiServiceFetch = {
-  async getWatchlist(): Promise<WatchlistItem[]> {
-    try {
-      const response = await fetch(WATCHLIST_ENDPOINT)
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`)
-      }
-      const data: WatchlistItem[] = await response.json()
-      return data
-    } catch (error) {
-      console.error('Fetch GET Error:', error)
-      throw error
-    }
-  },
-
-  async addToWatchlist(item: WatchlistAddItem): Promise<WatchlistItem> {
-    try {
-      const response = await fetch(WATCHLIST_ENDPOINT, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(item),
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`)
-      }
-      const data: WatchlistItem = await response.json()
-      return data
-    } catch (error) {
-      console.error('Fetch POST Error:', error)
-      throw error
-    }
-  },
-
-  async removeFromWatchlist(itemId: string): Promise<SuccessResponse | void> {
-    const deleteUrl = `${WATCHLIST_ENDPOINT}/${itemId}`
-
-    try {
-      const response = await fetch(deleteUrl, {
-        method: 'DELETE',
-        headers: {},
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! Status: ${response.status} ${response.statusText}`)
-      }
-
-      if (response.status === 204) {
-        return
-      } else {
-        try {
-          const data: SuccessResponse = await response.json()
-          return data
-        } catch (jsonError) {
-          console.warn('DELETE request successful, but response body was not valid JSON.')
-          return
-        }
-      }
-    } catch (error) {
-      console.error('Fetch DELETE Error:', error)
-      throw error
-    }
-  },
 }
 
 export const apiServiceAxios = {
@@ -108,8 +35,8 @@ export const apiServiceAxios = {
     }
   },
 
-  async removeFromWatchlist(itemId: string): Promise<SuccessResponse | void> {
-    const deleteUrl = `${WATCHLIST_ENDPOINT}/${itemId}`
+  async removeFromWatchlist(symbol: string): Promise<SuccessResponse | void> {
+    const deleteUrl = `${WATCHLIST_ENDPOINT}/${symbol}`
 
     try {
       const response = await axios.delete<SuccessResponse | void>(deleteUrl, { headers: {} })
@@ -117,6 +44,29 @@ export const apiServiceAxios = {
       return response.data
     } catch (error) {
       console.error('Axios DELETE Error:', error instanceof AxiosError ? error.message : error)
+      throw error
+    }
+  },
+
+  async getWatchlistItemBySymbol(symbol: string): Promise<WatchlistItem> {
+    const encodedSymbol = encodeURIComponent(symbol)
+    const url = `${WATCHLIST_ENDPOINT}/${encodedSymbol}`
+
+    console.log(`[API Service] Fetching watchlist item by symbol: ${symbol} from URL: ${url}`)
+
+    try {
+      const response = await axios.get<WatchlistItem>(url)
+      return response.data
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        console.error(
+          `[API Service] Axios GET by Symbol (${symbol}) Error: Status ${error.response?.status}, Response:`,
+          error.response?.data || error.message,
+        )
+      } else {
+        console.error(`[API Service] GET by Symbol (${symbol}) Unknown Error:`, error)
+      }
+
       throw error
     }
   },

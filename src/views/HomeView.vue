@@ -1,5 +1,9 @@
-<script setup lang="ts"></script>
+<script setup lang="ts">
+import TechStockDashboard from '@/components/TechStockDashboard.vue'
+</script>
 
 <template>
-  <main>hola</main>
+  <main>
+    <TechStockDashboard />
+  </main>
 </template>
