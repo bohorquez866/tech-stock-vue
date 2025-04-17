@@ -1,16 +1,8 @@
-import type { WatchlistItem } from '@/types/stocks'
+import type { SuccessResponse, WatchlistAddItem, WatchlistItem } from '@/types/stocks'
 import axios, { AxiosError } from 'axios'
 
 const BASE_URL = import.meta.env.VITE_AWS_URL as string
 const WATCHLIST_ENDPOINT = `${BASE_URL}/watchlist`
-console.log('BASE_URL:', BASE_URL)
-console.log('WATCHLIST_ENDPOINT:', WATCHLIST_ENDPOINT)
-
-type WatchlistAddItem = Omit<WatchlistItem, 'id'>
-
-interface SuccessResponse {
-  message: string
-}
 
 export const apiServiceAxios = {
   async getWatchlist(): Promise<WatchlistItem[]> {
@@ -23,11 +15,9 @@ export const apiServiceAxios = {
     }
   },
 
-  async addToWatchlist(item: WatchlistAddItem): Promise<WatchlistItem> {
+  async addToWatchlist(item: WatchlistAddItem): Promise<WatchlistAddItem> {
     try {
-      const response = await axios.post<WatchlistItem>(WATCHLIST_ENDPOINT, item, {
-        headers: {},
-      })
+      const response = await axios.post<WatchlistItem>(WATCHLIST_ENDPOINT, item)
       return response.data
     } catch (error) {
       console.error('Axios POST Error:', error instanceof AxiosError ? error.message : error)

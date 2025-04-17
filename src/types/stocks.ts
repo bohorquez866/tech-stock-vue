@@ -6,3 +6,13 @@ export interface WatchlistItem {
   notes: string
   created_at: string
 }
+
+export interface WatchlistAddItem {
+  symbol: string
+  companyName: string
+  notes: string
+}
+
+export interface SuccessResponse {
+  message: string
+}

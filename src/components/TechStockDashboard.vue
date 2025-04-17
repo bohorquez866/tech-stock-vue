@@ -1,5 +1,14 @@
 <template>
   <div class="q-pa-md">
+    <q-btn
+      class="add-btn"
+      label="Add Item"
+      color="primary"
+      icon="add"
+      @click="openAddModal"
+      data-cy="add-item-button"
+    />
+
     <q-table
       title="My Watchlist"
       :rows="watchlistRows"
@@ -14,6 +23,7 @@
       <template v-slot:loading>
         <q-inner-loading showing color="primary" />
       </template>
+
       <template v-slot:no-data="{ icon, message }">
         <div class="full-width row flex-center text-negative q-gutter-sm">
           <q-icon size="2em" :name="loadingError ? 'warning' : icon" />
@@ -23,14 +33,6 @@
 
       <template v-slot:body-cell-actions="props">
         <q-td :props="props" class="q-gutter-sm">
-          <q-btn
-            icon="visibility"
-            size="sm"
-            color="grey"
-            dense
-            @click.stop="openDetailDialog(props.row.id)"
-            aria-label="View Details"
-          />
           <q-btn
             icon="delete"
             size="sm"
@@ -80,30 +82,27 @@
         </q-card-actions>
       </q-card>
     </q-dialog>
+
+    <AddItemModal v-model="isAddDialogOpen" @itemAdded="handleItemAdded" />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { type QTableProps } from 'quasar'
-
 import { apiServiceAxios as api } from '@/lib/getStocks'
 import { type WatchlistItem } from '@/types/stocks'
+import AddItemModal from '@/components/AddItemModal.vue'
 
 const watchlistRows = ref<WatchlistItem[]>([])
-const isLoading = ref<boolean>(false) // Loading state for the table itself
-const loadingError = ref<string | null>(null) // Error state for table loading
 
-// --- State for the Detail Dialog (Placeholder - if needed) ---
-// const isDetailDialogVisible = ref<boolean>(false);
-// const selectedSymbolForDialog = ref<string | null>(null);
-
-// --- State for the Confirmation Dialog ---
+const isLoading = ref<boolean>(false)
+const isAddDialogOpen = ref<boolean>(false)
+const loadingError = ref<string | null>(null)
 const isConfirmDeleteDialogOpen = ref<boolean>(false)
-const itemToDelete = ref<WatchlistItem | null>(null) // Store the item to be deleted
-const isDeleting = ref<boolean>(false) // Loading state for the delete button in the dialog
+const itemToDelete = ref<WatchlistItem | null>(null)
+const isDeleting = ref<boolean>(false)
 
-// --- Table Column Definitions (Example - Define your actual columns) ---
 const tableColumns = computed<QTableProps['columns']>(() => [
   { name: 'id', label: 'ID', align: 'left', field: 'id', sortable: true },
   { name: 'symbol', label: 'Symbol', align: 'left', field: 'symbol', sortable: true },
@@ -120,9 +119,15 @@ const tableColumns = computed<QTableProps['columns']>(() => [
   { name: 'actions', label: 'Actions', align: 'center', field: 'actions' },
 ])
 
+const handleItemAdded = (newItem: WatchlistItem) => {
+  console.log('Item added event received from dialog:', newItem)
+  loadWatchlist()
+}
+
 const loadWatchlist = async () => {
   isLoading.value = true
   loadingError.value = null
+
   try {
     watchlistRows.value = await api.getWatchlist()
   } catch (err: any) {
@@ -137,6 +142,10 @@ const loadWatchlist = async () => {
 const promptDeleteConfirmation = (item: WatchlistItem) => {
   itemToDelete.value = item
   isConfirmDeleteDialogOpen.value = true
+}
+
+const openAddModal = () => {
+  isAddDialogOpen.value = true
 }
 
 const handleDeleteConfirmed = async () => {
@@ -168,16 +177,16 @@ const onRowClick = (evt: Event, row: WatchlistItem) => {
   console.log('Row clicked:', row.symbol)
 }
 
-const openDetailDialog = (symbol: string | null) => {
-  console.log('Request to open detail dialog for:', symbol)
-}
-
 onMounted(() => {
   loadWatchlist()
 })
 </script>
 
 <style scoped>
+.add-btn {
+  margin-bottom: 20px;
+}
+
 .q-table th {
   font-weight: bold;
 }

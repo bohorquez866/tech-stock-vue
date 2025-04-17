@@ -119,6 +119,7 @@ const fetchWatchlistItem = async () => {
   }
 
   console.log(`Dialog fetching details for: ${props.symbol}`)
+
   isLoading.value = true
   loadingError.value = null
   watchlistItem.value = null
